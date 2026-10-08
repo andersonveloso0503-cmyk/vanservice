@@ -193,7 +193,7 @@
           if (/password/i.test(m)) throw new Error('Escolha uma senha mais forte, com pelo menos 8 caracteres.');
           if (/failed to fetch|network/i.test(m)) throw traduz(r.error);
           if (/rate limit|too many/i.test(m)) throw new Error('Muitas tentativas seguidas. Espere alguns minutos e tente de novo.');
-          throw new Error('CPF ou nome não conferem com o cadastro. Digite o nome como está no contracheque. Se você é do RH ou do financeiro, use o código que o administrador passou.');
+          throw new Error('CPF ou nome não conferem com o cadastro. Digite o nome como está no contracheque. Se continuar sem dar certo, fale com o RH.');
         }
         if (!r.data || !r.data.session) throw new Error('O servidor ainda pede confirmação por e-mail. Avise o administrador do app.');
         return entrarDepoisDoLogin();
