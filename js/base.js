@@ -42,6 +42,22 @@
   VS.cpf = { digits: cpfDigits, valido: cpfValido, dv: cpfDV };
   VS.limparCodigo = limparCodigo;
 
+  // Primeiro acesso sem código: o primeiro nome tem que ser igual ao do cadastro e cada
+  // sobrenome digitado tem que existir nele (pode pular nomes do meio). Mesma regra do banco.
+  function palavrasDoNome(s) {
+    return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/[^A-Z]+/g, ' ').trim().split(' ').filter(Boolean);
+  }
+  VS.nomeConfere = function (cadastro, digitado) {
+    var c = palavrasDoNome(cadastro), d = palavrasDoNome(digitado), sobrenomes = 0;
+    if (!c.length || d.length < 2 || c[0] !== d[0]) return false;
+    var resto = c.slice(1);
+    for (var i = 1; i < d.length; i++) {
+      if (resto.indexOf(d[i]) < 0) return false;
+      if (['DE', 'DA', 'DO', 'DAS', 'DOS', 'E'].indexOf(d[i]) < 0) sobrenomes += 1;
+    }
+    return sobrenomes > 0;
+  };
+
   // ---------- boleto: tira valor e vencimento da linha digitável que vem escrita no PDF
   function mod10(num) {
     var soma = 0, peso = 2;

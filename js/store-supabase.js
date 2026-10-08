@@ -183,16 +183,16 @@
         return entrarDepoisDoLogin();
       });
     },
-    primeiroAcesso: function (cpf, codigo, senha) {
+    primeiroAcesso: function (cpf, nome, codigo, senha) {
       if (String(senha).length < 8) return Promise.reject(new Error('A senha precisa ter pelo menos 8 caracteres.'));
-      return sb.auth.signUp({ email: emailDe(cpf), password: senha, options: { data: { codigo: VS.limparCodigo(codigo) } } }).then(function (r) {
+      return sb.auth.signUp({ email: emailDe(cpf), password: senha, options: { data: { codigo: VS.limparCodigo(codigo), nome: String(nome || '').trim() } } }).then(function (r) {
         if (r.error) {
           var m = r.error.message || '';
-          if (/already registered|already been registered|user already/i.test(m)) throw new Error('Este CPF já tem senha. Use "Entrar". Se esqueceu a senha, peça um código novo ao RH.');
+          if (/already registered|already been registered|user already/i.test(m)) throw new Error('Este CPF já tem senha. Use "Entrar". Se esqueceu a senha ou não foi você quem criou, fale com o RH.');
           if (/password/i.test(m)) throw new Error('Escolha uma senha mais forte, com pelo menos 8 caracteres.');
           if (/failed to fetch|network/i.test(m)) throw traduz(r.error);
           if (/rate limit|too many/i.test(m)) throw new Error('Muitas tentativas seguidas. Espere alguns minutos e tente de novo.');
-          throw new Error('CPF ou código incorretos. Confira com o RH.');
+          throw new Error('CPF ou nome não conferem com o cadastro. Digite o nome como está no contracheque. Se você é do RH ou do financeiro, use o código que o administrador passou.');
         }
         if (!r.data || !r.data.session) throw new Error('O servidor ainda pede confirmação por e-mail. Avise o administrador do app.');
         return entrarDepoisDoLogin();

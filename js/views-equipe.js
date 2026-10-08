@@ -98,12 +98,14 @@
     var creditado = vt && vt.status === 'creditado';
     var h = '<div class="resumo"><strong>' + e(f.nome) + '</strong><span class="sub num">CPF ' + U.cpfFmt(f.cpf) + '</span><span class="est est-' + a.cls + '">' + a.txt + '</span></div>';
 
-    if (f.codigo) {
+    if (!U.ativo(f) && f.papel === 'funcionario') {
+      h += '<section class="bloco"><h3>Primeiro acesso</h3><p class="nota">' + e(U.primeiroNome(f.nome)) + ' ainda não criou a senha. Basta abrir o app, tocar em "Primeiro acesso" e digitar o CPF e o nome.</p></section>';
+    } else if (f.codigo) {
       h += '<section class="bloco"><h3>Código de primeiro acesso</h3><div class="codigo"><span class="num" id="func-codigo">' + e(U.codigoFmt(f.codigo)) + '</span>' +
         '<button type="button" class="btn btn-borda btn-p" data-act="copiar" data-texto="' + e(U.codigoFmt(f.codigo)) + '">' + U.ic('copiar', 18) + '<span>Copiar</span></button></div>' +
         '<p class="nota">Entregue este código só para ' + e(U.primeiroNome(f.nome)) + '. Ele vale uma vez, para criar a senha.</p></section>';
     } else if (f.id !== u.id && (f.papel === 'funcionario' || u.papel === 'admin')) {
-      h += '<section class="bloco"><h3>Senha</h3><button type="button" class="btn btn-borda" data-act="func-codigo" data-id="' + f.id + '">Esqueceu a senha? Gerar novo código</button></section>';
+      h += '<section class="bloco"><h3>Senha</h3><button type="button" class="btn btn-borda" data-act="func-codigo" data-id="' + f.id + '">' + (f.papel === 'funcionario' ? 'Esqueceu a senha? Liberar novo cadastro' : 'Esqueceu a senha? Gerar novo código') + '</button></section>';
     }
 
     if (f.papel !== 'admin') {
@@ -142,7 +144,11 @@
     } catch (err) { VS.toast('Não consegui copiar. Selecione o texto e copie.', 'erro'); }
   };
   VS.acts['func-codigo'] = function (el) {
-    S.novoCodigo(el.getAttribute('data-id')).then(function () { VS.render(); VS.toast('Novo código gerado. A senha antiga deixou de valer.'); }, VS.falha);
+    var f = S.porId(S.db.funcionarios, el.getAttribute('data-id')), func = f && f.papel === 'funcionario';
+    S.novoCodigo(el.getAttribute('data-id')).then(function () {
+      VS.render();
+      VS.toast(func ? 'Senha apagada. A pessoa cria outra em "Primeiro acesso", com CPF e nome.' : 'Novo código gerado. A senha antiga deixou de valer.');
+    }, VS.falha);
   };
   VS.acts['func-vt'] = function (el) {
     S.setVT(el.getAttribute('data-id'), S.mesAtual, el.getAttribute('data-status')).then(function () { VS.render(); }, VS.falha);

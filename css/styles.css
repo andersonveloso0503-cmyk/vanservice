@@ -284,3 +284,7 @@ a { color: var(--accent-text); }
 .chip-arq { min-height: 44px; padding: 0 14px; border: 1.5px solid var(--line); border-radius: 12px; background: var(--surface-2); color: var(--ink); font-size: 14px; font-weight: 700; display: inline-flex; align-items: center; gap: 8px; }
 .dica { font-size: 13px; font-weight: 500; color: var(--ink-2); }
 .lista-simples li > span:first-child { min-width: 0; }
+
+.com-codigo { border: 1.5px solid var(--line); border-radius: var(--r-ctl); padding: 0 14px; }
+.com-codigo summary { min-height: 44px; display: flex; align-items: center; font-size: 14px; font-weight: 700; color: var(--accent-text); cursor: pointer; }
+.com-codigo[open] { padding-bottom: 14px; }

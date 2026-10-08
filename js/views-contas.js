@@ -39,18 +39,20 @@
   };
 
   VS.views.primeiro = function () {
-    var dica = '';
+    var dica = '', abrirCodigo = VS.state.comCodigo ? ' open' : '';
     if (S.demo) {
-      var novo = S.db.funcionarios.filter(function (f) { return f.codigo && !f.bloqueado; })[0];
-      if (novo) dica = '<p class="nota">Para testar na demonstração: CPF <strong>' + U.cpfFmt(novo.cpf) + '</strong> e código <strong>' + e(U.codigoFmt(novo.codigo)) + '</strong>.</p>';
+      var novo = S.db.funcionarios.filter(function (f) { return !U.ativo(f) && !f.bloqueado && f.papel === 'funcionario'; })[0];
+      if (novo) dica = '<p class="nota">Para testar na demonstração: CPF <strong>' + U.cpfFmt(novo.cpf) + '</strong> e nome <strong>' + e(novo.nome) + '</strong>.</p>';
     }
     return cabecaPublica('Crie a sua senha para acessar seus contracheques.') +
       '<div class="pub-cartao">' +
       '<h1>Primeiro acesso</h1>' +
-      '<p class="nota">O código de primeiro acesso é entregue pelo RH e vale uma única vez.</p>' + dica +
+      '<p class="nota">Digite seu CPF e seu nome como estão no contracheque. Pode ser só o primeiro nome e o sobrenome.</p>' + dica +
       '<form data-form="primeiro" class="form" novalidate>' +
       '<label class="campo" for="pa-cpf">CPF<input id="pa-cpf" name="cpf" type="text" inputmode="numeric" placeholder="000.000.000-00" data-mask="cpf"></label>' +
-      '<label class="campo" for="pa-codigo">Código de primeiro acesso<input id="pa-codigo" name="codigo" type="text" autocapitalize="characters" autocomplete="off" placeholder="XXXXX-XXXXX"></label>' +
+      '<label class="campo" for="pa-nome">Nome e sobrenome<input id="pa-nome" name="nome" type="text" autocomplete="name" placeholder="Ex.: Maria Souza"></label>' +
+      '<details class="com-codigo"' + abrirCodigo + '><summary>Sou do RH, do financeiro ou recebi um código</summary>' +
+      '<label class="campo" for="pa-codigo">Código de acesso<input id="pa-codigo" name="codigo" type="text" autocapitalize="characters" autocomplete="off" placeholder="XXXXX-XXXXX"></label></details>' +
       '<label class="campo" for="pa-senha">Nova senha<input id="pa-senha" name="senha" type="password" autocomplete="new-password" placeholder="Pelo menos 8 caracteres"></label>' +
       '<label class="campo" for="pa-senha2">Repita a senha<input id="pa-senha2" name="senha2" type="password" autocomplete="new-password"></label>' +
       '<p class="form-erro" role="alert" hidden></p>' +
@@ -60,10 +62,10 @@
   };
   VS.forms.primeiro = function (d) {
     if (!VS.cpf.valido(d.cpf)) throw new Error('Confira o CPF: faltam números ou ele está incorreto.');
-    if (!d.codigo) throw new Error('Digite o código que o RH entregou.');
+    if (!d.codigo && VS.u.semAcento(d.nome).split(' ').filter(Boolean).length < 2) throw new Error('Digite seu nome e sobrenome.');
     if (d.senha.length < 8) throw new Error('A senha precisa ter pelo menos 8 caracteres.');
     if (d.senha !== d.senha2) throw new Error('As duas senhas não são iguais.');
-    return S.primeiroAcesso(d.cpf, d.codigo, d.senha).then(function (u) {
+    return S.primeiroAcesso(d.cpf, d.nome, d.codigo, d.senha).then(function (u) {
       VS.go(VS.inicioDe(u.papel)); VS.toast('Senha criada. Bem-vindo, ' + U.primeiroNome(u.nome) + '.');
     });
   };
