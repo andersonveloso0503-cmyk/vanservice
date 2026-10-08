@@ -80,7 +80,9 @@
   VS.titulos.perfil = 'Meu perfil';
   VS.views.perfil = function () {
     var u = S.me();
-    return '<section class="cartao bloco-cartao"><dl class="dados">' +
+    var guia = S.demo ? '' : '<section class="cartao bloco-cartao bloco-linha"><span class="bloco-ic">' + U.ic('balao') + '</span><span class="bloco-txt"><h2>Como usar o app</h2><span class="sub">Passo a passo com imagens, só com o que você usa.</span></span>' +
+      '<a class="btn btn-cheio btn-p" href="guia.html?p=' + u.papel + '">Abrir guia</a></section>';
+    return guia + '<section class="cartao bloco-cartao"><dl class="dados">' +
       '<div><dt>Nome</dt><dd>' + e(u.nome) + '</dd></div>' +
       '<div><dt>CPF</dt><dd class="num">' + U.cpfMask(u.cpf) + '</dd></div>' +
       '<div><dt>Perfil de acesso</dt><dd>' + U.PAPEIS[u.papel] + '</dd></div></dl></section>' +

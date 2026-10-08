@@ -66,6 +66,7 @@ a { color: var(--accent-text); }
 .btn[disabled] { opacity: .5; cursor: not-allowed; }
 .btn-ic { width: 44px; height: 44px; border-radius: 14px; border: 0; background: transparent; color: inherit; display: inline-flex; align-items: center; justify-content: center; position: relative; flex-shrink: 0; }
 .link { min-height: 44px; padding: 0 4px; border: 0; background: none; color: var(--accent-text); font-weight: 700; font-size: 14px; text-decoration: underline; text-underline-offset: 3px; }
+a.link { display: inline-flex; align-items: center; }
 .link-centro { align-self: center; }
 .link-perigo { color: var(--late-text); align-self: flex-start; }
 

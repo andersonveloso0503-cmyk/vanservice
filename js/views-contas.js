@@ -20,7 +20,8 @@
       '<p class="form-erro" role="alert" hidden></p>' +
       '<button type="submit" class="btn btn-cheio">Entrar</button>' +
       '</form>' +
-      '<button type="button" class="link link-centro" data-act="ir" data-rota="primeiro">Primeiro acesso? Criar minha senha</button>';
+      '<button type="button" class="link link-centro" data-act="ir" data-rota="primeiro">Primeiro acesso? Criar minha senha</button>' +
+      (S.demo ? '' : '<a class="link link-centro" href="guia.html?p=inicio">Como instalar o app no celular</a>');
     if (S.demo) {
       h += '<div class="demo-caixa"><h2>Demonstração</h2><p>Entre sem senha para ver o app como cada perfil.</p><div class="demo-botoes">' +
         '<button type="button" class="btn btn-borda" data-act="demo-entrar" data-papel="admin">Administrador</button>' +
