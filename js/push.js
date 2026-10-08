@@ -44,17 +44,37 @@
     }).catch(function () {});
   };
 
+  function comPrazo(promessa, ms, msg) {
+    return new Promise(function (ok, falha) {
+      var t = setTimeout(function () { falha(new Error(msg)); }, ms);
+      promessa.then(function (v) { clearTimeout(t); ok(v); }, function (e) { clearTimeout(t); falha(e); });
+    });
+  }
+  function detalhe(e) { return e ? ((e.name && e.name !== 'Error' ? e.name + ': ' : '') + (e.message || String(e))) : ''; }
+
+  // Cada passo tem a sua mensagem, para saber exatamente onde parou.
   P.ativar = function () {
     if (!temSuporte()) return Promise.reject(new Error('Este navegador não recebe notificações.'));
+    var reg;
     return Notification.requestPermission().then(function (perm) {
-      if (perm !== 'granted') throw new Error('Para receber os avisos, toque em "Permitir" quando o celular perguntar.');
-      return navigator.serviceWorker.ready;
-    }).then(function (reg) {
-      return reg.pushManager.getSubscription().then(function (sub) {
-        return sub || reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: chaveBytes(CFG.vapidPublica) });
+      if (perm !== 'granted') throw new Error(perm === 'denied'
+        ? 'As notificações estão bloqueadas para o app. Libere em Configurações do celular → Notificações → Van Service (ou no cadeado do navegador) e tente de novo.'
+        : 'Para receber os avisos, toque em "Permitir" quando o celular perguntar.');
+      if (!navigator.serviceWorker.controller && !location.protocol.startsWith('https')) throw new Error('Abra o app pelo endereço com https.');
+      return comPrazo(navigator.serviceWorker.register('sw.js').then(function () { return navigator.serviceWorker.ready; }), 10000,
+        'O app ainda não terminou de carregar. Feche o app, abra de novo pelo ícone e tente outra vez.');
+    }).then(function (r) {
+      reg = r;
+      return reg.pushManager.getSubscription();
+    }).then(function (sub) {
+      if (sub) return sub;
+      return reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: chaveBytes(CFG.vapidPublica) }).catch(function (e) {
+        throw new Error('O celular não aceitou ativar os avisos. No Android, use o Chrome; no iPhone, abra o app pelo ícone instalado. (Detalhe: ' + detalhe(e) + ')');
       });
     }).then(function (sub) {
-      return S.salvarPush(sub.toJSON());
+      return S.salvarPush(sub.toJSON()).catch(function (e) {
+        throw new Error('O celular aceitou, mas não consegui guardar no banco. ' + (e && e.message ? e.message : ''));
+      });
     }).then(function () { P.ativo = true; });
   };
 
@@ -73,6 +93,7 @@
     return P.desativar().catch(function () {});
   };
 
+  function erroHtml() { return P.ultimoErro ? '<p class="form-erro" role="alert">' + U.esc(P.ultimoErro) + '</p>' : ''; }
   function textoDoPapel(papel) {
     if (papel === 'admin' || papel === 'financeiro') return 'Receba um aviso no celular quando o RH / Fiscal mandar uma conta nova para pagar.';
     if (papel === 'rh') return 'Receba um aviso no celular quando chegar pedido de férias ou documento de funcionário.';
@@ -91,7 +112,7 @@
     if (st === 'bloqueado') return h + '<p class="sub">As notificações estão bloqueadas para o app neste aparelho. Libere nas configurações do celular (Notificações → Van Service) ou do navegador e abra o app de novo.</p></section>';
     if (st === 'iphone') return h + '<p class="sub">No iPhone, os avisos só funcionam com o app instalado. Abra no Safari, toque em Compartilhar → <strong>Adicionar à Tela de Início</strong> e abra o app pelo ícone. Depois volte aqui.</p></section>';
     if (st === 'sem-suporte') return h + '<p class="sub">Este navegador não recebe notificações. No Android use o Chrome; no computador, Chrome ou Edge.</p></section>';
-    return h + '<p class="sub">' + textoDoPapel(u.papel) + '</p>' +
+    return h + '<p class="sub">' + textoDoPapel(u.papel) + '</p>' + erroHtml() +
       '<button type="button" class="btn btn-cheio" data-act="push-ativar">' + U.ic('sino', 20) + '<span>Ativar avisos neste aparelho</span></button></section>';
   };
 
@@ -106,16 +127,17 @@
         '<button type="button" class="link" data-act="push-depois">Agora não</button></section>';
     }
     return '<section class="cartao convite"><span class="bloco-ic">' + U.ic('sino') + '</span><div class="convite-txt"><strong>Avisos no celular</strong>' +
-      '<span class="sub">' + textoDoPapel(u.papel) + '</span></div>' +
+      '<span class="sub">' + textoDoPapel(u.papel) + '</span>' + erroHtml() + '</div>' +
       '<div class="convite-botoes"><button type="button" class="btn btn-cheio btn-p" data-act="push-ativar">Ativar</button>' +
       '<button type="button" class="link" data-act="push-depois">Agora não</button></div></section>';
   };
 
   VS.acts['push-ativar'] = function (el) {
     el.disabled = true;
+    P.ultimoErro = '';
     P.ativar().then(function () {
       VS.render(); VS.toast('Pronto. Os avisos vão chegar neste aparelho.');
-    }, function (e) { el.disabled = false; VS.render(); VS.falha(e); });
+    }, function (e) { el.disabled = false; P.ultimoErro = e && e.message ? e.message : 'Algo deu errado.'; VS.render(); });
   };
   VS.acts['push-desativar'] = function () {
     P.desativar().then(function () { VS.render(); VS.toast('Avisos desativados neste aparelho.'); }, VS.falha);

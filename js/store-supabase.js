@@ -33,6 +33,7 @@
     if (/failed to fetch|networkerror|load failed|fetch/i.test(msg)) return new Error('Sem conexão com o servidor. Confira a internet e tente de novo.');
     if (e && (e.code === '42501' || /permission denied/i.test(msg))) return new Error('Seu perfil não tem permissão para isso.');
     if (/jwt|token|not authenticated/i.test(msg)) return new Error('Sua sessão expirou. Entre de novo.');
+    if ((e && e.code === 'PGRST202') || /could not find the function/i.test(msg)) return new Error('O banco de dados está desatualizado. Rode o arquivo van-service-banco.sql mais novo no Supabase (SQL Editor → Run).');
     try { console.error('[Van Service]', e); } catch (x) { /* sem console */ }
     return new Error(padrao || 'Algo deu errado. Tente de novo.');
   }
