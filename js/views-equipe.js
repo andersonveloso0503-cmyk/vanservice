@@ -174,13 +174,16 @@
   function interpretar(linhas) {
     linhas = linhas.filter(function (l) { return l && l.some(function (c) { return String(c == null ? '' : c).trim() !== ''; }); });
     var iNome = -1, iCpf = -1, inicio = 0;
-    if (linhas.length) {
-      linhas[0].forEach(function (c, i) {
+    // O cabeçalho pode não estar na primeira linha (planilhas com título em cima): procura nas 15 primeiras.
+    for (var k = 0; k < Math.min(15, linhas.length) && inicio === 0; k++) {
+      var cpfK = -1, nomeK = -1;
+      linhas[k].forEach(function (c, i) {
         var t = U.semAcento(c);
-        if (iCpf < 0 && t.indexOf('CPF') >= 0) iCpf = i;
-        else if (iNome < 0 && (t.indexOf('NOME') >= 0 || t.indexOf('FUNCIONARIO') >= 0 || t.indexOf('COLABORADOR') >= 0)) iNome = i;
+        if (t.length > 40) return;
+        if (cpfK < 0 && t.indexOf('CPF') >= 0) cpfK = i;
+        else if (nomeK < 0 && (t.indexOf('NOME') >= 0 || t.indexOf('FUNCIONARIO') >= 0 || t.indexOf('COLABORADOR') >= 0 || t.indexOf('TRABALHADOR') >= 0)) nomeK = i;
       });
-      if (iCpf >= 0 || iNome >= 0) inicio = 1;
+      if (cpfK >= 0 && nomeK >= 0) { iCpf = cpfK; iNome = nomeK; inicio = k + 1; }
     }
     if (iCpf < 0 || iNome < 0) { // sem cabeçalho: descobre pelas colunas
       var amostra = linhas[inicio] || [];
@@ -198,6 +201,7 @@
       var d = bruto.replace(/\D/g, '');
       if (d.length >= 9 && d.length < 11) d = ('00' + d).slice(-11); // Excel corta zeros à esquerda
       var linha = n + inicio + 1;
+      if (!nome && !d) return; // linhas de total ou observação no fim da planilha
       if (!nome) { ruins.push({ linha: linha, nome: '(sem nome)', motivo: 'Falta o nome' }); return; }
       if (!VS.cpf.valido(d)) { ruins.push({ linha: linha, nome: nome, motivo: bruto ? 'CPF inválido: ' + bruto : 'Falta o CPF' }); return; }
       if (vistos[d]) { ruins.push({ linha: linha, nome: nome, motivo: 'CPF repetido na planilha' }); return; }
