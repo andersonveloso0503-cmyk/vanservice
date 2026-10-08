@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Van Service</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#022B57">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Van Service">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="css/styles.css?v=202610081117">
+<style>:root { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<script>
+window.VS = {
+  logo: 'icons/logo.jpg',
+  libs: {
+    pdfjs: ['vendor/pdf.min.js', 'vendor/pdf.worker.min.js'],
+    pdflib: ['vendor/pdf-lib.min.js'],
+    xlsx: ['vendor/xlsx.full.min.js']
+  }
+};
+</script>
+<script src="config.js?v=202610081117"></script>
+<script src="vendor/supabase.js"></script>
+<script src="js/base.js?v=202610081117"></script>
+<script src="js/store-supabase.js?v=202610081117"></script>
+<script src="js/ui.js?v=202610081117"></script>
+<script src="js/views-contas.js?v=202610081117"></script>
+<script src="js/views-equipe.js?v=202610081117"></script>
+<script src="js/views-admin.js?v=202610081117"></script>
+<script>
+if (/COLE_AQUI/.test(JSON.stringify(window.VS_CONFIG || {}))) {
+  document.getElementById('app').innerHTML = '<p class="carregando">Falta configurar o endereço do banco de dados no arquivo config.js.</p>';
+} else {
+  VS.iniciar();
+  if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js');
+}
+</script>
+</body>
+</html>

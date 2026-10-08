@@ -1,0 +1,24 @@
+APP VAN SERVICE — como colocar no ar
+====================================
+
+1) Banco de dados (uma vez só)
+   - No Supabase, abra "SQL Editor", cole o arquivo van-service-banco.sql (enviado junto, fora desta pasta) inteiro e clique em "Run".
+   - Depois rode a linha do fim do arquivo, com seu nome e CPF:
+       select public.primeiro_admin('Seu Nome Completo', '00000000000');
+     O resultado mostra o seu código de primeiro acesso.
+
+2) Publicar o app no GitHub Pages
+   - Em github.com, crie um repositório novo chamado van-service-app (público).
+   - Clique em "uploading an existing file" e arraste TODO o conteúdo desta pasta
+     (index.html, config.js, as pastas css, js, vendor, icons e os outros arquivos).
+     Clique em "Commit changes".
+   - Vá em Settings > Pages. Em "Branch", escolha "main" e a pasta "/ (root)". Clique em Save.
+   - Em um ou dois minutos o app fica em:
+       https://andersonveloso0503-cmyk.github.io/van-service-app/
+
+3) Primeiro acesso
+   - Abra o endereço, toque em "Primeiro acesso? Criar minha senha",
+     digite seu CPF e o código do passo 1, e crie a sua senha.
+
+O arquivo config.js tem o endereço do banco e a chave pública. Essa chave pode ficar
+à mostra: quem protege os dados são as regras do banco.
