@@ -107,14 +107,10 @@
       h += '</select></label><p class="sub">Salva na hora. ' + (f.papel === 'funcionario' ? 'Escolha ' + U.PAPEIS.rh + ' para dar acesso às telas do RH / Fiscal.' : 'Para voltar a ser só funcionário, escolha Funcionário.') + '</p></section>';
     }
 
-    if (!U.ativo(f) && f.papel !== 'admin') {
+    if (!U.ativo(f)) {
       h += '<section class="bloco"><h3>Primeiro acesso</h3><p class="nota">' + e(U.primeiroNome(f.nome)) + ' ainda não criou a senha. Basta abrir o app, tocar em "Criar minha senha" e digitar o CPF e o nome. Não precisa de código.</p></section>';
-    } else if (f.codigo) {
-      h += '<section class="bloco"><h3>Código de primeiro acesso</h3><div class="codigo"><span class="num" id="func-codigo">' + e(U.codigoFmt(f.codigo)) + '</span>' +
-        '<button type="button" class="btn btn-borda btn-p" data-act="copiar" data-texto="' + e(U.codigoFmt(f.codigo)) + '">' + U.ic('copiar', 18) + '<span>Copiar</span></button></div>' +
-        '<p class="nota">Entregue este código só para ' + e(U.primeiroNome(f.nome)) + '. Ele vale uma vez, para criar a senha.</p></section>';
     } else if (f.id !== u.id && (f.papel === 'funcionario' || u.papel === 'admin')) {
-      h += '<section class="bloco"><h3>Senha</h3><button type="button" class="btn btn-borda" data-act="func-codigo" data-id="' + f.id + '">' + (f.papel !== 'admin' ? 'Esqueceu a senha? Liberar novo cadastro' : 'Esqueceu a senha? Gerar novo código') + '</button></section>';
+      h += '<section class="bloco"><h3>Senha</h3><button type="button" class="btn btn-borda" data-act="func-codigo" data-id="' + f.id + '">' + 'Esqueceu a senha? Liberar novo cadastro' + '</button></section>';
     }
 
     if (f.papel !== 'admin') {
@@ -154,7 +150,7 @@
     var f = S.porId(S.db.funcionarios, el.getAttribute('data-id')), func = f && f.papel !== 'admin';
     S.novoCodigo(el.getAttribute('data-id')).then(function () {
       VS.render();
-      VS.toast(func ? 'Senha apagada. A pessoa cria outra em "Criar minha senha", com CPF e nome.' : 'Novo código gerado. A senha antiga deixou de valer.');
+      VS.toast('Senha apagada. A pessoa cria outra em "Criar minha senha", com CPF e nome.');
     }, VS.falha);
   };
   VS.acts['func-vt'] = function (el) {
