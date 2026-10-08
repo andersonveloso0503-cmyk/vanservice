@@ -163,6 +163,20 @@
       '<div class="sheet-corpo">' + r.html + '</div></div></div>';
   }
 
+  // Metade azul da tela de entrada (só aparece no computador).
+  function marcaPublica(rota) {
+    var orc = rota === 'orcamento';
+    var titulo = orc ? 'Terceirização de serviços em Porto Alegre e região.' : 'Tudo da Van Service em um só lugar.';
+    var texto = orc ? 'Conte o que você precisa e a nossa equipe responde pelo WhatsApp.' : 'Contas a pagar, contracheques, vale-transporte e orçamentos, no celular ou no computador.';
+    var itens = orc ? [['pessoa', 'Portaria, recepção e serviços gerais'], ['casa', 'Limpeza, zeladoria e manutenção'], ['balao', 'Resposta pelo WhatsApp']]
+      : [['lista', 'Contas com aviso na hora para o financeiro'], ['arquivo', 'Contracheque e vale-transporte do funcionário'], ['calendario', 'Pedidos de férias e documentos']];
+    return '<aside class="pub-marca"><svg class="pub-deco" viewBox="0 0 600 420" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2"><path d="M20 260 L170 400 L580 20"/><path d="M60 260 L190 380 L580 60" opacity=".6"/><path d="M100 260 L210 360 L580 100" opacity=".35"/></g></svg>' +
+      '<div class="pub-marca-topo"><img src="' + VS.logo + '" alt="" width="48" height="48"><span>Van Service</span></div>' +
+      '<div class="pub-marca-meio"><h2>' + titulo + '</h2><p>' + texto + '</p><ul>' +
+      itens.map(function (i) { return '<li><span>' + U.ic(i[0], 20) + '</span>' + i[1] + '</li>'; }).join('') + '</ul></div>' +
+      '<p class="pub-marca-pe">Porto Alegre · RS</p></aside>';
+  }
+
   VS.render = function () {
     var root = document.getElementById('app');
     var u = S.me(), st = VS.state, h;
@@ -171,7 +185,7 @@
     if (u && (publicas.indexOf(st.rota) >= 0 || VS.menuDe(u.papel).indexOf(st.rota) < 0)) st.rota = VS.inicioDe(u.papel);
 
     if (!u) {
-      h = '<div class="publico">' + VS.views[st.rota]() + '</div>';
+      h = '<div class="publico">' + marcaPublica(st.rota) + '<main class="pub-lado"><div class="pub-caixa">' + VS.views[st.rota]() + '</div></main></div>';
     } else {
       var itens = VS.menuDe(u.papel);
       var naoLidos = S.meusAvisos().filter(function (a) { return !a.lido; }).length;

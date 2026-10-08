@@ -97,13 +97,43 @@ a.link { display: inline-flex; align-items: center; }
 .busca input { flex: 1; min-width: 0; border: 0; background: transparent; outline: none; color: var(--ink); font-size: 16px; min-height: 46px; }
 .busca:focus-within { outline: 3px solid var(--accent); outline-offset: 2px; }
 
-/* ---------- telas sem login */
-.publico { max-width: 480px; margin: 0 auto; background: var(--brand); border-radius: 0 0 28px 28px; }
-.pub-topo { padding: 36px 28px 28px; display: flex; flex-direction: column; align-items: center; gap: 14px; color: var(--on-brand-2); text-align: center; }
-.pub-topo img { border-radius: 28px; display: block; }
-.pub-cartao { background: var(--surface); border-radius: 28px; padding: 28px 24px 24px; display: flex; flex-direction: column; gap: 16px; }
-.pub-cartao h1 { font-size: 22px; font-weight: 800; }
-.pub-rodape { border-top: 1px solid var(--line); padding-top: 16px; display: flex; flex-direction: column; gap: 10px; text-align: center; font-size: 14px; color: var(--ink-2); }
+/* ---------- telas sem login: no computador, metade azul com a marca e metade com o formulário;
+   no celular, topo azul curto e o cartão branco por cima. */
+.publico { min-height: 100vh; display: flex; flex-direction: column; }
+.pub-marca { display: none; }
+.pub-lado { flex: 1; display: flex; flex-direction: column; }
+.pub-caixa { width: 100%; max-width: 480px; margin: 0 auto; display: flex; flex-direction: column; flex: 1; }
+.pub-topo { background: var(--brand); color: var(--on-brand); padding: 28px 20px 60px; display: flex; align-items: center; gap: 14px; }
+.pub-topo img { border-radius: 14px; display: block; flex-shrink: 0; }
+.pub-topo strong { display: block; font-size: 18px; font-weight: 800; }
+.pub-topo span { display: block; font-size: 14px; font-weight: 500; color: var(--on-brand-2); }
+.pub-cartao { background: var(--surface); border-radius: 22px; padding: 26px 22px 22px; margin: -36px 16px 24px; display: flex; flex-direction: column; gap: 16px; box-shadow: 0 6px 20px rgba(2, 43, 87, .08); }
+.pub-cartao h1 { font-size: 24px; font-weight: 800; }
+.pub-cartao h1 + .nota { margin-top: 4px; }
+.pub-rodape { text-align: center; font-size: 14px; color: var(--ink-2); display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 2px; }
+.ou { display: flex; align-items: center; gap: 12px; color: var(--ink-2); font-size: 13px; font-weight: 600; }
+.ou::before, .ou::after { content: ''; flex: 1; height: 1px; background: var(--line); }
+.campo-senha { position: relative; }
+.campo-senha input { padding-right: 96px; }
+.ver-senha { position: absolute; right: 6px; bottom: 3px; min-height: 44px; padding: 0 12px; border: 0; background: none; color: var(--accent-text); font-size: 14px; font-weight: 700; }
+@media (min-width: 900px) {
+  .publico { flex-direction: row; }
+  .pub-marca { flex: 1.15; display: flex; flex-direction: column; justify-content: space-between; gap: 32px; position: sticky; top: 0; height: 100vh; padding: 44px 56px; background: var(--brand); color: var(--on-brand); overflow: hidden; }
+  .pub-deco { position: absolute; right: -80px; bottom: -40px; width: 560px; color: #4FA3E8; opacity: .45; pointer-events: none; }
+  .pub-marca-topo { position: relative; display: flex; align-items: center; gap: 14px; font-size: 18px; font-weight: 800; }
+  .pub-marca-topo img { border-radius: 12px; display: block; }
+  .pub-marca-meio { position: relative; max-width: 460px; }
+  .pub-marca-meio h2 { font-size: 40px; line-height: 1.1; font-weight: 800; letter-spacing: -.02em; }
+  .pub-marca-meio p { margin-top: 14px; font-size: 17px; line-height: 1.5; color: var(--on-brand-2); }
+  .pub-marca-meio ul { margin-top: 28px; display: flex; flex-direction: column; gap: 14px; }
+  .pub-marca-meio li { display: flex; align-items: center; gap: 12px; font-size: 15px; font-weight: 600; }
+  .pub-marca-meio li span { width: 38px; height: 38px; border-radius: 10px; background: var(--brand-2); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .pub-marca-pe { position: relative; font-size: 13px; color: var(--on-brand-2); }
+  .pub-lado { flex: 1; background: var(--surface); justify-content: center; padding: 40px 32px; }
+  .pub-caixa { max-width: 400px; flex: 0 0 auto; }
+  .pub-topo { display: none; }
+  .pub-cartao { margin: 0; padding: 0; box-shadow: none; border-radius: 0; }
+}
 .demo-caixa { border: 1.5px dashed var(--line); border-radius: var(--r-card); padding: 16px; background: var(--surface-2); display: flex; flex-direction: column; gap: 8px; }
 .demo-caixa h2 { font-size: 15px; font-weight: 800; }
 .demo-caixa p { font-size: 14px; color: var(--ink-2); }

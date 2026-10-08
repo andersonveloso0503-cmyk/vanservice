@@ -7,20 +7,22 @@
   // Entrada
   // =====================================================================
   function cabecaPublica(texto) {
-    return '<div class="pub-topo"><img src="' + VS.logo + '" alt="Van Service" width="132" height="132"><p>' + texto + '</p></div>';
+    return '<div class="pub-topo"><img src="' + VS.logo + '" alt="" width="56" height="56"><div><strong>Van Service</strong><span>' + texto + '</span></div></div>';
   }
 
   VS.views.login = function () {
-    var h = cabecaPublica('Contas a pagar, contracheques e orçamentos em um só lugar.') +
+    var h = cabecaPublica('Contas, contracheques e orçamentos') +
       '<div class="pub-cartao">' +
-      '<h1>Entrar</h1>' +
+      '<div><h1>Entrar</h1><p class="nota">Use seu CPF e a senha que você criou.</p></div>' +
       '<form data-form="login" class="form" novalidate>' +
       '<label class="campo" for="login-cpf">CPF<input id="login-cpf" name="cpf" type="text" inputmode="numeric" autocomplete="username" placeholder="000.000.000-00" data-mask="cpf"></label>' +
-      '<label class="campo" for="login-senha">Senha<input id="login-senha" name="senha" type="password" autocomplete="current-password" placeholder="Sua senha"></label>' +
+      '<div class="campo campo-senha"><label for="login-senha">Senha</label><input id="login-senha" name="senha" type="password" autocomplete="current-password" placeholder="Sua senha">' +
+      '<button type="button" class="ver-senha" data-act="ver-senha" data-alvo="login-senha" aria-pressed="false">Mostrar</button></div>' +
       '<p class="form-erro" role="alert" hidden></p>' +
       '<button type="submit" class="btn btn-cheio">Entrar</button>' +
       '</form>' +
-      '<button type="button" class="link link-centro" data-act="ir" data-rota="primeiro">Primeiro acesso? Criar minha senha</button>' +
+      '<p class="ou">primeira vez aqui?</p>' +
+      '<button type="button" class="btn btn-borda" data-act="ir" data-rota="primeiro">Criar minha senha</button>' +
       (S.demo ? '' : '<a class="link link-centro" href="guia.html?p=inicio">Como instalar o app no celular</a>');
     if (S.demo) {
       h += '<div class="demo-caixa"><h2>Demonstração</h2><p>Entre sem senha para ver o app como cada perfil.</p><div class="demo-botoes">' +
@@ -30,8 +32,15 @@
         '<button type="button" class="btn btn-borda" data-act="demo-entrar" data-papel="funcionario">Funcionário</button>' +
         '</div></div>';
     }
-    h += '<div class="pub-rodape"><span>Não é funcionário?</span><button type="button" class="btn btn-borda" data-act="ir" data-rota="orcamento">Pedir um orçamento</button></div></div>';
+    h += '<p class="pub-rodape">É cliente? <button type="button" class="link" data-act="ir" data-rota="orcamento">Peça um orçamento</button></p></div>';
     return h;
+  };
+  VS.acts['ver-senha'] = function (el) {
+    var inp = document.getElementById(el.getAttribute('data-alvo'));
+    var ver = inp.type === 'password';
+    inp.type = ver ? 'text' : 'password';
+    el.textContent = ver ? 'Esconder' : 'Mostrar';
+    el.setAttribute('aria-pressed', ver ? 'true' : 'false');
   };
   VS.forms.login = function (d) {
     if (!VS.cpf.valido(d.cpf)) throw new Error('Confira o CPF: faltam números ou ele está incorreto.');
@@ -45,7 +54,7 @@
       var novo = S.db.funcionarios.filter(function (f) { return !U.ativo(f) && !f.bloqueado && f.papel === 'funcionario'; })[0];
       if (novo) dica = '<p class="nota">Para testar na demonstração: CPF <strong>' + U.cpfFmt(novo.cpf) + '</strong> e nome <strong>' + e(novo.nome) + '</strong>.</p>';
     }
-    return cabecaPublica('Crie a sua senha para acessar seus contracheques.') +
+    return cabecaPublica('Crie a sua senha') +
       '<div class="pub-cartao">' +
       '<h1>Primeiro acesso</h1>' +
       '<p class="nota">Digite seu CPF e seu nome como estão no contracheque. Pode ser só o primeiro nome e o sobrenome.</p>' + dica +
@@ -78,13 +87,13 @@
   var SERVICOS = ['Portaria', 'Limpeza', 'Zeladoria', 'Recepção', 'Serviços gerais', 'Manutenção', 'Portaria virtual', 'Outro serviço'];
   VS.views.orcamento = function () {
     if (VS.state.orcEnviado) {
-      return cabecaPublica('Terceirização de serviços em Porto Alegre e região.') +
+      return cabecaPublica('Terceirização em Porto Alegre') +
         '<div class="pub-cartao"><div class="feito">' + U.ic('check', 30) + '</div><h1>Pedido enviado</h1>' +
         '<p class="nota">Recebemos o seu pedido. A resposta chega pelo WhatsApp que você informou.</p>' +
         '<button type="button" class="btn btn-borda" data-act="orc-novo">Enviar outro pedido</button>' +
         '<button type="button" class="link link-centro" data-act="ir" data-rota="login">Voltar para a entrada</button></div>';
     }
-    var h = cabecaPublica('Terceirização de serviços em Porto Alegre e região.') +
+    var h = cabecaPublica('Terceirização em Porto Alegre') +
       '<div class="pub-cartao"><h1>Peça um orçamento</h1>' +
       '<form data-form="orcamento" class="form" novalidate>' +
       '<label class="campo" for="orc-nome">Seu nome<input id="orc-nome" name="nome" type="text" autocomplete="name" placeholder="Nome completo"></label>' +

@@ -1,5 +1,5 @@
 // Mantém o app abrindo mesmo com internet ruim. Sempre tenta a versão mais nova primeiro.
-const CACHE = 'van-service-202610081422';
+const CACHE = 'van-service-202610081424';
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', (e) => {
   e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== CACHE).map((k) => caches.delete(k)))).then(() => self.clients.claim()));
