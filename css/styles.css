@@ -326,3 +326,10 @@ a.link { display: inline-flex; align-items: center; }
 .lido-rot { font-size: 12px; font-weight: 700; color: var(--ink-2); }
 .lido-cod, .codigo-barras { font-size: 13px; font-weight: 600; overflow-wrap: anywhere; user-select: all; }
 .chip-pagar { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-text); }
+
+/* ---------- convite para ativar os avisos no celular */
+.convite { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; border: 1.5px solid var(--accent); background: var(--accent-soft); box-shadow: none; }
+.convite .bloco-ic { background: var(--surface); color: var(--accent-text); }
+.convite-txt { flex: 1; min-width: 180px; display: flex; flex-direction: column; gap: 2px; }
+.convite-txt strong { font-weight: 800; }
+.convite-botoes { display: flex; align-items: center; gap: 6px; }

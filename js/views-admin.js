@@ -92,7 +92,7 @@
       '<label class="campo" for="ts-nova2">Repita a nova senha<input id="ts-nova2" name="nova2" type="password" autocomplete="new-password"></label>' +
       '<p class="form-erro" role="alert" hidden></p><button type="submit" class="btn btn-borda">Salvar nova senha</button></form>' +
       (S.demo ? '<p class="nota">Na demonstração, a senha de todos os perfis é demo1234.</p>' : '') + '</section>' +
-      '<section class="cartao bloco-cartao"><h2>Notificações</h2><p class="sub">Com o app instalado no celular ou no computador, os avisos chegam como notificação: contas novas para o financeiro, contracheque novo para o funcionário, pedidos para o RH.</p></section>' +
+      (VS.push ? VS.push.cartao() : '') +
       '<button type="button" class="btn btn-borda btn-sair" data-act="sair">' + U.ic('sair', 20) + '<span>Sair do app</span></button>';
   };
   VS.forms.trocarSenha = function (d, form) {

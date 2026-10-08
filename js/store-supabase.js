@@ -199,6 +199,8 @@
         return entrarDepoisDoLogin();
       });
     },
+    salvarPush: function (sub) { return rpc('push_salvar', { p: sub }); },
+    removerPush: function (endpoint) { return rpc('push_remover', { p_endpoint: endpoint }); },
     sair: function () { return sb.auth.signOut().then(limpar, limpar); },
     trocarSenha: function (atual, nova) {
       var u = S.me();
