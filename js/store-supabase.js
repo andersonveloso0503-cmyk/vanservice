@@ -63,7 +63,7 @@
     db.contracheques = (r.contracheques || []).map(function (c) {
       return { id: c.id, funcionarioId: c.funcionario_id, mes: c.mes, arquivo: arq(c.arquivo), enviadoEm: local(c.enviado_em), confirmadoEm: local(c.confirmado_em) };
     });
-    db.vt = (r.vt || []).map(function (v) { return { funcionarioId: v.funcionario_id, mes: v.mes, status: v.status, em: local(v.em) }; });
+    db.vt = (r.vt || []).map(function (v) { return { funcionarioId: v.funcionario_id, mes: v.mes, status: v.status, valor: v.valor == null ? null : Number(v.valor), em: local(v.em) }; });
     db.solicitacoes = (r.solicitacoes || []).map(function (s) {
       return { id: s.id, tipo: 'ferias', funcionarioId: s.funcionario_id, funcionarioNome: s.nome, inicio: s.inicio, dias: s.dias, obs: s.obs || '',
         status: s.status, criadoEm: local(s.criado_em), decididoPorNome: s.decidido_por_nome, decididoEm: local(s.decidido_em) };
@@ -244,6 +244,9 @@
       return mudar('funcionario_atualizar', { p_id: id, p: p });
     },
     novoCodigo: function (id) { return mudar('funcionario_novo_codigo', { p_id: id }); },
+    publicarVT: function (mes, itens) {
+      return mudar('vt_importar', { p_mes: mes, p_itens: itens.map(function (it) { return { funcionario_id: it.funcionarioId, valor: it.valor == null ? '' : String(it.valor) }; }) });
+    },
     setVT: function (funcId, mes, status) { return mudar('vt_definir', { p_funcionario: funcId, p_mes: mes, p_status: status }); },
 
     // ----- contracheques

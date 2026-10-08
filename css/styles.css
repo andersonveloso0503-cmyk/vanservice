@@ -176,7 +176,7 @@ a { color: var(--accent-text); }
 .barra-lista h2, .secao { font-size: 17px; font-weight: 800; }
 .secao { margin-top: 8px; }
 .btn-topo { align-self: stretch; }
-.acoes-topo { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.acoes-topo { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
 .acoes-topo .btn { padding: 0 10px; font-size: 14px; }
 
 .fichas { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }

@@ -78,7 +78,8 @@
     var mes = ultimoMesFolha();
     return '<div class="acoes-topo">' +
       '<button type="button" class="btn btn-cheio" data-act="import-abrir">' + U.ic('enviar', 20) + '<span>Importar planilha</span></button>' +
-      '<button type="button" class="btn btn-cheio" data-act="folha-abrir">' + U.ic('arquivo', 20) + '<span>Enviar contracheques</span></button></div>' +
+      '<button type="button" class="btn btn-cheio" data-act="folha-abrir">' + U.ic('arquivo', 20) + '<span>Enviar contracheques</span></button>' +
+      '<button type="button" class="btn btn-cheio" data-act="vt-abrir">' + U.ic('onibus', 20) + '<span>Vale-transporte</span></button></div>' +
       '<label class="busca" for="eq-busca">' + U.ic('busca', 20) + '<span class="so-leitor">Buscar por nome ou CPF</span><input id="eq-busca" type="search" placeholder="Buscar por nome ou CPF" value="' + e(VS.state.busca) + '" data-input="equipe-busca"></label>' +
       '<p class="sub">' + S.db.funcionarios.length + ' pessoas · situação do contracheque de ' + U.mesNome(mes) + '</p>' +
       '<div id="eq-lista">' + listaEquipe() + '</div>';
@@ -110,7 +111,7 @@
     }
 
     if (f.papel !== 'admin') {
-      h += '<section class="bloco"><h3>Vale-transporte de ' + U.mesNome(mes) + '</h3><div class="linha-botoes"><span class="est est-' + (creditado ? 'bom' : 'atencao') + '">' + (creditado ? 'Creditado' : 'Pendente') + '</span>' +
+      h += '<section class="bloco"><h3>Vale-transporte de ' + U.mesNome(mes) + '</h3><div class="linha-botoes"><span class="est est-' + (creditado ? 'bom' : 'atencao') + '">' + (creditado ? 'Creditado' + (vt.valor != null ? ' · ' + U.brl(vt.valor) : '') : 'Pendente') + '</span>' +
         '<button type="button" class="btn btn-borda btn-p" data-act="func-vt" data-id="' + f.id + '" data-status="' + (creditado ? 'pendente' : 'creditado') + '">' + (creditado ? 'Voltar para pendente' : 'Marcar como creditado') + '</button></div></section>';
 
       h += '<section class="bloco"><h3>Férias</h3><form data-form="funcFerias" class="form" novalidate><input type="hidden" name="id" value="' + f.id + '"><div class="dupla">' +
@@ -172,8 +173,10 @@
 
   function linhasDeCsv(txt) {
     txt = txt.replace(/^﻿/, '');
-    var prim = txt.split(/\r?\n/)[0] || '';
-    var sep = (prim.split(';').length > prim.split(',').length) ? ';' : (prim.indexOf('\t') >= 0 ? '\t' : ',');
+    // O separador é o que mais aparece nas primeiras linhas (a primeira pode ser só um título).
+    var amostra = txt.split(/\r?\n/).slice(0, 10).join('\n');
+    var conta = function (c) { return amostra.split(c).length - 1; };
+    var sep = conta(';') >= conta(',') && conta(';') > 0 ? ';' : (conta('\t') > conta(',') ? '\t' : ',');
     return txt.split(/\r?\n/).map(function (l) {
       return l.split(sep).map(function (c) { return c.replace(/^\s*"?|"?\s*$/g, ''); });
     });
@@ -216,20 +219,118 @@
     });
     return { bons: bons, ruins: ruins, vistos: vistos };
   }
-  function lerPlanilha(arq) {
+  // Linhas da primeira aba de uma planilha (Excel ou CSV), como listas de células.
+  function linhasDaPlanilha(arq) {
     if (/\.csv$|\.txt$/i.test(arq.nome) || arq.tipo === 'text/csv') {
       return lerBytes(arq.blob).then(function (b) {
         var txt;
         try { txt = new TextDecoder('utf-8', { fatal: true }).decode(b); } catch (err) { txt = new TextDecoder('windows-1252').decode(b); }
-        return interpretar(linhasDeCsv(txt));
+        return linhasDeCsv(txt);
       });
     }
     return VS.carregar('xlsx').then(function () { return lerBytes(arq.blob); }).then(function (b) {
       var wb = window.XLSX.read(b, { type: 'array' });
       var aba = wb.Sheets[wb.SheetNames[0]];
-      return interpretar(window.XLSX.utils.sheet_to_json(aba, { header: 1, raw: false, defval: '' }));
+      return window.XLSX.utils.sheet_to_json(aba, { header: 1, raw: false, defval: '' });
     });
   }
+  function lerPlanilha(arq) { return linhasDaPlanilha(arq).then(interpretar); }
+
+  // =====================================================================
+  // Vale-transporte do mês por planilha
+  // =====================================================================
+  function numeroBR(v) {
+    if (typeof v === 'number') return v;
+    var s = String(v == null ? '' : v).replace(/[^\d,.-]/g, '');
+    if (!s) return NaN;
+    if (s.indexOf(',') >= 0) s = s.replace(/\./g, '').replace(',', '.');
+    var n = parseFloat(s);
+    return isFinite(n) ? n : NaN;
+  }
+  function interpretarVT(linhas) {
+    linhas = linhas.filter(function (l) { return l && l.some(function (c) { return String(c == null ? '' : c).trim() !== ''; }); });
+    var iCpf = -1, iNome = -1, iValor = -1, inicio = -1;
+    for (var k = 0; k < Math.min(15, linhas.length) && inicio < 0; k++) {
+      var c1 = -1, n1 = -1, v1 = -1, v2 = -1;
+      linhas[k].forEach(function (c, i) {
+        var t = U.semAcento(c);
+        if (!t || t.length > 40) return;
+        if (c1 < 0 && t.indexOf('CPF') >= 0) c1 = i;
+        else if (n1 < 0 && /NOME|FUNCIONARIO|COLABORADOR|TRABALHADOR|BENEFICIARIO|USUARIO/.test(t)) n1 = i;
+        else if (v1 < 0 && /VALOR/.test(t)) v1 = i;
+        else if (v2 < 0 && /TOTAL|CREDITO|RECARGA|\bVT\b|VALE/.test(t)) v2 = i;
+      });
+      if (c1 >= 0 || n1 >= 0) { iCpf = c1; iNome = n1; iValor = v1 >= 0 ? v1 : v2; inicio = k + 1; }
+    }
+    if (inicio < 0) throw new Error('Não encontrei as colunas. A planilha precisa de uma coluna CPF (ou Nome) e, de preferência, uma coluna Valor.');
+    var pessoas = S.db.funcionarios.filter(function (f) { return !f.bloqueado; });
+    var porCpf = {}, porNome = {};
+    pessoas.forEach(function (f) { porCpf[f.cpf] = f; porNome[U.semAcento(f.nome)] = f; });
+    var achados = {}, ordem = [], faltam = [];
+    linhas.slice(inicio).forEach(function (l, n) {
+      var nome = iNome >= 0 ? String(l[iNome] == null ? '' : l[iNome]).trim() : '';
+      var d = iCpf >= 0 ? String(l[iCpf] == null ? '' : l[iCpf]).replace(/\D/g, '') : '';
+      if (d.length >= 9 && d.length < 11) d = ('00' + d).slice(-11);
+      if (!nome && !d) return;
+      if (/^TOTA/.test(U.semAcento(nome))) return;
+      var f = (d && porCpf[d]) || (nome && porNome[U.semAcento(nome)]) || null;
+      if (!f && nome) {
+        var parecidos = pessoas.filter(function (p) { return VS.nomeConfere(p.nome, nome); });
+        if (parecidos.length === 1) f = parecidos[0];
+      }
+      if (!f) { faltam.push({ linha: n + inicio + 1, texto: nome || U.cpfFmt(d) }); return; }
+      var valor = iValor >= 0 ? numeroBR(l[iValor]) : NaN;
+      if (!achados[f.id]) { achados[f.id] = { funcionarioId: f.id, nome: f.nome, valor: null }; ordem.push(f.id); }
+      if (isFinite(valor)) achados[f.id].valor = Math.round(((achados[f.id].valor || 0) + valor) * 100) / 100;
+    });
+    return { itens: ordem.map(function (id) { return achados[id]; }), faltam: faltam, temValor: iValor >= 0 };
+  }
+  VS.acts['vt-abrir'] = function () { VS.abrir({ tipo: 'vt', passo: 1 }); };
+  VS.sheets.vt = function (s) {
+    var h;
+    if (s.passo === 1) {
+      h = '<p class="nota">Envie a planilha do vale-transporte do mês, com uma coluna <strong>CPF</strong> (ou <strong>Nome</strong>) e uma coluna <strong>Valor</strong>. Cada funcionário encontrado fica com o vale como creditado, vê o valor no app e recebe um aviso.</p>' +
+        '<form data-form="vtLer" class="form" novalidate>' +
+        '<label class="campo" for="vt-mes">Mês do vale<input id="vt-mes" name="mes" type="month" value="' + S.mesAtual + '"></label>' +
+        '<label class="campo" for="vt-arq">Planilha (Excel ou CSV)<input id="vt-arq" name="arquivo" type="file" accept=".xlsx,.xls,.csv,text/csv"></label>' +
+        '<p class="form-erro" role="alert" hidden></p><button type="submit" class="btn btn-cheio">Conferir planilha</button></form>';
+      return { titulo: 'Vale-transporte do mês', html: h };
+    }
+    var r = s.resultado, total = r.itens.reduce(function (t, it) { return t + (it.valor || 0); }, 0);
+    h = '<ul class="resumo-lista"><li><strong class="num">' + r.itens.length + '</strong> funcionários encontrados</li>' +
+      '<li><strong class="num">' + (r.temValor ? U.brl(total).replace('R$', '').trim() : '—') + '</strong> total em R$</li>' +
+      '<li><strong class="num">' + r.faltam.length + '</strong> linhas sem funcionário</li></ul>' +
+      '<p class="sub">Vale-transporte de ' + U.mesNome(s.mes) + (r.temValor ? '' : ' · a planilha não tem coluna de valor, então só a situação muda para creditado') + '</p>';
+    if (r.itens.length) {
+      h += '<h3>Encontrados</h3><ul class="lista-simples">';
+      r.itens.slice(0, 40).forEach(function (it) { h += '<li><span>' + e(it.nome) + '</span><strong class="num">' + (it.valor != null ? U.brl(it.valor) : '') + '</strong></li>'; });
+      if (r.itens.length > 40) h += '<li><span class="sub">e mais ' + (r.itens.length - 40) + '</span></li>';
+      h += '</ul>';
+    }
+    if (r.faltam.length) {
+      h += '<h3>Não encontrados no cadastro</h3><ul class="lista-simples">';
+      r.faltam.slice(0, 30).forEach(function (l) { h += '<li><span>Linha ' + l.linha + ': ' + e(l.texto) + '</span><span class="est est-ruim">Não encontrado</span></li>'; });
+      h += '</ul><p class="nota">Essas linhas ficam de fora. Confira o CPF ou importe a pessoa em "Importar planilha".</p>';
+    }
+    h += '<form data-form="vtPublicar" class="form" novalidate><p class="form-erro" role="alert" hidden></p>' +
+      (r.itens.length ? '<button type="submit" class="btn btn-cheio">Marcar ' + r.itens.length + (r.itens.length === 1 ? ' vale como creditado' : ' vales como creditados') + ' e avisar</button>' : '') +
+      '<button type="button" class="link link-centro" data-act="vt-abrir">Escolher outra planilha</button></form>';
+    return { titulo: 'Conferir vale-transporte', html: h };
+  };
+  VS.forms.vtLer = function (d) {
+    if (!/^\d{4}-\d{2}$/.test(d.mes || '')) throw new Error('Escolha o mês do vale.');
+    if (!d.arquivo) throw new Error('Escolha a planilha.');
+    return linhasDaPlanilha(d.arquivo).then(function (linhas) {
+      VS.abrir({ tipo: 'vt', passo: 2, mes: d.mes, resultado: interpretarVT(linhas) });
+    });
+  };
+  VS.forms.vtPublicar = function () {
+    var s = VS.state.sheet;
+    return S.publicarVT(s.mes, s.resultado.itens).then(function (n) {
+      VS.state.sheet = null; VS.render();
+      VS.toast(n + (n === 1 ? ' vale-transporte marcado como creditado.' : ' vales-transportes marcados como creditados.') + ' Os funcionários foram avisados.');
+    });
+  };
 
   VS.sheets.importar = function (s) {
     var h;
@@ -612,7 +713,7 @@
     var vt = S.db.vt.filter(function (v) { return v.funcionarioId === u.id && v.mes === mes; })[0];
     var cred = vt && vt.status === 'creditado';
     h += '<section class="cartao bloco-cartao bloco-linha"><span class="bloco-ic">' + U.ic('onibus') + '</span><span class="bloco-txt"><h2>Vale-transporte</h2><span class="sub">' + U.mesNomeCap(mes) + '</span></span>' +
-      '<span class="est est-' + (cred ? 'bom' : 'atencao') + '">' + (cred ? 'Creditado' : 'Ainda não creditado') + '</span></section>';
+      '<span class="est est-' + (cred ? 'bom' : 'atencao') + '">' + (cred ? 'Creditado' + (vt.valor != null ? ' · ' + U.brl(vt.valor) : '') : 'Ainda não creditado') + '</span></section>';
 
     var extras = S.meusPagamentos ? S.meusPagamentos() : [];
     if (extras.length) {
