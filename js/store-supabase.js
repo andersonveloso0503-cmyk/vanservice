@@ -35,7 +35,9 @@
     if (/jwt|token|not authenticated/i.test(msg)) return new Error('Sua sessão expirou. Entre de novo.');
     if ((e && e.code === 'PGRST202') || /could not find the function/i.test(msg)) return new Error('O banco de dados está desatualizado. Rode o arquivo van-service-banco.sql mais novo no Supabase (SQL Editor → Run).');
     try { console.error('[Van Service]', e); } catch (x) { /* sem console */ }
-    return new Error(padrao || 'Algo deu errado. Tente de novo.');
+    // Leva junto o motivo técnico, para conseguir descobrir o problema pelo print da tela.
+    var tec = [e && e.code, msg].filter(Boolean).join(': ').slice(0, 160);
+    return new Error((padrao || 'Algo deu errado. Tente de novo.') + (tec ? ' (detalhe: ' + tec + ')' : ''));
   }
   function rpc(nome, args) {
     return sb.rpc(nome, args || {}).then(function (r) { if (r.error) throw traduz(r.error); return r.data; }, function (e) { throw traduz(e); });

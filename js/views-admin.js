@@ -93,7 +93,8 @@
       '<p class="form-erro" role="alert" hidden></p><button type="submit" class="btn btn-borda">Salvar nova senha</button></form>' +
       (S.demo ? '<p class="nota">Na demonstração, a senha de todos os perfis é demo1234.</p>' : '') + '</section>' +
       (VS.push ? VS.push.cartao() : '') +
-      '<button type="button" class="btn btn-borda btn-sair" data-act="sair">' + U.ic('sair', 20) + '<span>Sair do app</span></button>';
+      '<button type="button" class="btn btn-borda btn-sair" data-act="sair">' + U.ic('sair', 20) + '<span>Sair do app</span></button>' +
+      (VS.versao ? '<p class="sub">Versão do app: ' + U.esc(VS.versao) + '</p>' : '');
   };
   VS.forms.trocarSenha = function (d, form) {
     if (!d.atual) throw new Error('Digite a senha atual.');
