@@ -8,13 +8,13 @@ APP VAN SERVICE — como colocar no ar
      O resultado mostra o seu código de primeiro acesso.
 
 2) Publicar o app no GitHub Pages
-   - Em github.com, crie um repositório novo chamado van-service-app (público).
+   - Em github.com, crie um repositório novo chamado vanservice (público).
    - Clique em "uploading an existing file" e arraste TODO o conteúdo desta pasta
      (index.html, config.js, as pastas css, js, vendor, icons e os outros arquivos).
      Clique em "Commit changes".
    - Vá em Settings > Pages. Em "Branch", escolha "main" e a pasta "/ (root)". Clique em Save.
    - Em um ou dois minutos o app fica em:
-       https://andersonveloso0503-cmyk.github.io/van-service-app/
+       https://andersonveloso0503-cmyk.github.io/vanservice/
 
 3) Primeiro acesso
    - Abra o endereço, toque em "Primeiro acesso? Criar minha senha",
