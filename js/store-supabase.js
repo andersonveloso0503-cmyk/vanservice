@@ -54,7 +54,8 @@
       return { id: c.id, descricao: c.descricao, valor: Number(c.valor), vencimento: c.vencimento, diaBase: c.dia_base, contratoId: c.contrato_id,
         recorrente: !!c.recorrente, anexo: arq(c.anexo), enviadoPor: c.enviado_por, enviadoPorNome: c.enviado_por_nome, enviadoEm: local(c.enviado_em),
         pagoEm: local(c.pago_em), pagoPor: c.pago_por, pagoPorNome: c.pago_por_nome, comprovante: arq(c.comprovante), geradaPor: c.gerada_por,
-        tipo: c.tipo || 'conta', funcionarioId: c.funcionario_id || null, funcionarioNome: c.funcionario_nome || null, obs: c.obs || '' };
+        tipo: c.tipo || 'conta', funcionarioId: c.funcionario_id || null, funcionarioNome: c.funcionario_nome || null, obs: c.obs || '',
+        linha: c.linha_digitavel || '', pix: c.pix || '' };
     });
     db.pagamentos = (r.pagamentos || []).map(function (p) {
       return { id: p.id, descricao: p.descricao, obs: p.obs || '', valor: Number(p.valor), pagoEm: local(p.pago_em) };
@@ -215,7 +216,7 @@
     addConta: function (d) {
       return enviar('anexos', emPasta('contas'), d.anexo).then(function (a) {
         return mudar('conta_criar', { p: { descricao: d.descricao, valor: d.valor, vencimento: d.vencimento, contrato_id: d.contratoId, recorrente: !!d.recorrente, anexo: a,
-          tipo: d.tipo === 'extra' ? 'extra' : 'conta', funcionario_id: d.funcionarioId || '', obs: d.obs || '' } });
+          tipo: d.tipo === 'extra' ? 'extra' : 'conta', funcionario_id: d.funcionarioId || '', obs: d.obs || '', linha: d.linha || '', pix: d.pix || '' } });
       });
     },
     excluirConta: function (id) { return mudar('conta_excluir', { p_id: id }); },

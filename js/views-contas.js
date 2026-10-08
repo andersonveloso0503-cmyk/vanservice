@@ -131,6 +131,13 @@
     if (!a) return '';
     return '<button type="button" class="chip-arq" data-act="abrir-arquivo" data-arq="' + U.refArq(a) + '" data-nome="' + e(titulo) + '">' + U.ic(ehPdf(a) ? 'arquivo' : 'clipe', 18) + '<span>' + (ehPdf(a) ? pdf : foto) + '</span></button>';
   }
+  // Botões para o financeiro copiar o código e colar no app do banco.
+  function copiaveis(c) {
+    var h = '';
+    if (c.linha) h += '<button type="button" class="chip-arq chip-pagar" data-act="copiar" data-texto="' + e(c.linha) + '" data-aviso="Código de barras copiado. Cole no app do banco.">' + U.ic('copiar', 18) + '<span>Copiar código de barras</span></button>';
+    if (c.pix) h += '<button type="button" class="chip-arq chip-pagar" data-act="copiar" data-texto="' + e(c.pix) + '" data-aviso="Pix copiado. Cole no app do banco, em Pix copia e cola.">' + U.ic('copiar', 18) + '<span>Copiar Pix</span></button>';
+    return h;
+  }
   function anexosDe(c) {
     return botaoAnexo(c.anexo, ehExtra(c) ? 'PDF anexado' : 'PDF da conta', ehExtra(c) ? 'Foto anexada' : 'Foto da conta', tituloDe(c)) +
       botaoAnexo(c.comprovante, 'Comprovante', 'Comprovante', 'Comprovante: ' + tituloDe(c));
@@ -177,7 +184,7 @@
     } else {
       h += '<ul class="cartoes">';
       lista.forEach(function (c) {
-        var s = U.statusConta(c), anexos = anexosDe(c);
+        var s = U.statusConta(c), anexos = (s === 'pago' ? '' : copiaveis(c)) + anexosDe(c);
         h += '<li class="cartao conta conta-' + s + '">' +
           '<div class="conta-topo"><button type="button" class="conta-nome" data-act="conta-detalhe" data-id="' + c.id + '"><strong>' + e(tituloDe(c)) + '</strong>' +
           '<span class="sub">' + quando(c) + '</span><span class="sub">' + (ehExtra(c) ? 'Pagamento a funcionário · ' : '') + e(U.contratoDe(c.contratoId)) + (c.recorrente ? ' · todo mês' : '') + '</span></button>' +
@@ -219,7 +226,9 @@
     if (!contratos) return { titulo: 'Nova conta', html: SEM_CONTRATO };
     var h = '<form data-form="contaNova" class="form" novalidate>' +
       '<label class="campo" for="cn-anexo">PDF ou foto da conta<input id="cn-anexo" name="anexo" type="file" accept="application/pdf,image/*" data-change="conta-arquivo">' +
-      '<small class="dica" id="cn-dica">O arquivo fica guardado junto da conta. Se for boleto em PDF, o app tenta preencher o valor e o vencimento.</small></label>' +
+      '<small class="dica" id="cn-dica">Escolha o arquivo primeiro: o app lê o boleto e preenche o resto. O arquivo fica guardado junto da conta.</small></label>' +
+      '<div class="lido" id="cn-lido" hidden></div>' +
+      '<input type="hidden" name="linha" id="cn-linha"><input type="hidden" name="pix" id="cn-pix">' +
       '<label class="campo" for="cn-desc">Descrição<input id="cn-desc" name="descricao" type="text" placeholder="Ex.: combustível da frota"></label>' +
       '<div class="dupla">' +
       '<label class="campo" for="cn-valor">Valor<input id="cn-valor" name="valor" type="text" inputmode="decimal" placeholder="0,00"></label>' +
@@ -231,19 +240,25 @@
       '<button type="submit" class="btn btn-cheio">Enviar ao financeiro</button></form>';
     return { titulo: 'Nova conta', html: h };
   };
-  // Ao escolher um PDF, procura a linha do boleto e preenche valor e vencimento para o RH conferir.
+  // Ao escolher o arquivo, lê o boleto (texto, código de barras ou Pix) e preenche o formulário para o RH conferir.
   VS.changes['conta-arquivo'] = function (el) {
-    var f = el.files && el.files[0], dica = document.getElementById('cn-dica');
+    var f = el.files && el.files[0], dica = document.getElementById('cn-dica'), caixa = document.getElementById('cn-lido');
     if (!f || !dica) return;
-    if (!(f.type === 'application/pdf' || /\.pdf$/i.test(f.name))) { dica.textContent = 'Foto anexada. Ela fica guardada junto da conta.'; return; }
-    dica.textContent = 'Lendo o PDF…';
-    VS.lerBoletoPdf(f).then(function (b) {
+    var campo = function (id) { return document.getElementById(id); };
+    campo('cn-linha').value = ''; campo('cn-pix').value = ''; caixa.hidden = true;
+    dica.textContent = 'Lendo o arquivo…';
+    VS.lerArquivoConta(f).then(function (r) {
       if (!document.body.contains(el)) return;
-      var v = document.getElementById('cn-valor'), d = document.getElementById('cn-venc'), achou = [];
-      if (b && b.valor && v) { v.value = b.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); achou.push('o valor'); }
-      if (b && b.vencimento && d) { d.value = b.vencimento; achou.push('o vencimento'); }
-      dica.textContent = achou.length ? 'PDF anexado. Preenchi ' + achou.join(' e ') + ' pelo boleto: confira antes de enviar.' : 'PDF anexado. Não achei a linha do boleto nele; preencha o valor e o vencimento.';
-    }, function () { if (document.body.contains(el)) dica.textContent = 'PDF anexado. Preencha o valor e o vencimento.'; });
+      var achou = [], h = '';
+      if (r.descricao && !campo('cn-desc').value) { campo('cn-desc').value = r.descricao; achou.push('quem cobra'); }
+      if (r.valor) { campo('cn-valor').value = r.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); achou.push('o valor'); }
+      if (r.vencimento) { campo('cn-venc').value = r.vencimento; achou.push('o vencimento'); }
+      if (r.linha) { campo('cn-linha').value = r.linha; h += '<span class="lido-rot">Código de barras</span><span class="num lido-cod">' + e(VS.boleto.linhaFormatada(r.linha)) + '</span>'; }
+      if (r.pix) { campo('cn-pix').value = r.pix; h += '<span class="lido-rot">Pix copia e cola</span><span class="num lido-cod">' + e(r.pix.slice(0, 48)) + '…</span>'; }
+      if (h) { caixa.innerHTML = '<span class="lido-ok">' + U.ic('check', 18) + 'Pronto para pagar: o financeiro vai poder copiar e colar no banco.</span>' + h; caixa.hidden = false; }
+      if (achou.length || h) dica.textContent = 'Li o arquivo e preenchi ' + (achou.length ? achou.join(', ') : 'o código de pagamento') + '. Confira antes de enviar.';
+      else dica.textContent = 'Arquivo anexado, mas não consegui ler o boleto nele (foto tremida, cortada ou sem código de barras). Preencha valor e vencimento.';
+    }, function () { if (document.body.contains(el)) dica.textContent = 'Arquivo anexado. Não consegui ler; preencha valor e vencimento.'; });
   };
   VS.forms.contaNova = function (d) {
     d.valor = U.parseValor(d.valor);
@@ -297,6 +312,7 @@
     var c = S.porId(S.db.contas, s.id);
     if (!c) return { titulo: 'Marcar como pago', html: '<p class="vazio">Lançamento não encontrado.</p>' };
     var h = '<div class="resumo"><strong>' + e(tituloDe(c)) + '</strong><span class="num">' + U.brl(c.valor) + '</span><span class="sub">' + quando(c) + '</span></div>' +
+      (c.linha || c.pix ? '<div class="conta-anexos">' + copiaveis(c) + '</div>' + (c.linha ? '<p class="num codigo-barras">' + e(VS.boleto.linhaFormatada(c.linha)) + '</p>' : '') : '') +
       '<form data-form="contaPagar" class="form" novalidate><input type="hidden" name="id" value="' + c.id + '">' +
       '<label class="campo" for="cp-comp">Comprovante em PDF ou foto (opcional)<input id="cp-comp" name="comprovante" type="file" accept="application/pdf,image/*"></label>' +
       (c.recorrente ? '<p class="nota">Esta conta repete todo mês. Ao confirmar, a de ' + U.dataBR(VS.datas.proximoVenc(c.vencimento, c.diaBase)) + ' é criada.</p>' : '') +
@@ -330,7 +346,8 @@
       (extra ? '' : '<div><dt>Repete</dt><dd>' + (c.recorrente ? 'Todo mês' : 'Não') + '</dd></div>') +
       '<div><dt>' + (extra ? 'Enviado por' : 'Enviada por') + '</dt><dd>' + e(U.quem(c, 'enviadoPor')) + ', ' + U.dataHora(c.enviadoEm) + '</dd></div>' +
       (c.pagoEm ? '<div><dt>' + (extra ? 'Pago por' : 'Paga por') + '</dt><dd>' + e(U.quem(c, 'pagoPor')) + ', ' + U.dataHora(c.pagoEm) + '</dd></div>' : '') +
-      '</dl><div class="conta-anexos">' + (anexos || '<span class="sub">Nenhum arquivo anexado</span>') + '</div>';
+      (c.linha ? '<div><dt>Código de barras</dt><dd class="num codigo-barras">' + e(VS.boleto.linhaFormatada(c.linha)) + '</dd></div>' : '') +
+      '</dl><div class="conta-anexos">' + (c.pagoEm ? '' : copiaveis(c)) + (anexos || '<span class="sub">Nenhum arquivo anexado</span>') + '</div>';
     if ((u.papel === 'rh' || u.papel === 'admin') && !c.pagoEm) {
       h += s.confirmar
         ? '<div class="perigo"><p>Excluir este lançamento? Isso não pode ser desfeito.</p><div class="linha-botoes"><button type="button" class="btn btn-perigo" data-act="conta-excluir" data-id="' + c.id + '">Excluir</button><button type="button" class="btn btn-borda" data-act="conta-excluir-nao">Manter</button></div></div>'

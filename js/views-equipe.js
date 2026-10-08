@@ -7,7 +7,8 @@
   var LIBS = VS.libs || {
     pdfjs: ['https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js', 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'],
     pdflib: ['https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js'],
-    xlsx: ['https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js']
+    xlsx: ['https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'],
+    zxing: ['https://unpkg.com/@zxing/library@0.21.3/umd/index.min.js']
   };
   var carregadas = {};
   function script(url) {
@@ -140,7 +141,7 @@
   VS.acts.copiar = function (el) {
     var t = el.getAttribute('data-texto');
     try {
-      navigator.clipboard.writeText(t).then(function () { VS.toast('Copiado.'); }, function () { VS.toast('Não consegui copiar. Selecione o texto e copie.', 'erro'); });
+      navigator.clipboard.writeText(t).then(function () { VS.toast(el.getAttribute('data-aviso') || 'Copiado.'); }, function () { VS.toast('Não consegui copiar. Selecione o texto e copie.', 'erro'); });
     } catch (err) { VS.toast('Não consegui copiar. Selecione o texto e copie.', 'erro'); }
   };
   VS.acts['func-codigo'] = function (el) {
@@ -288,24 +289,110 @@
   // =====================================================================
   VS.acts['folha-abrir'] = function () { VS.abrir({ tipo: 'folha', passo: 1 }); };
 
+  // Texto de cada página, mantendo as quebras de linha do PDF.
+  function textosDoDoc(doc) {
+    var saida = [], p = Promise.resolve();
+    for (var i = 1; i <= doc.numPages; i++) {
+      (function (n) {
+        p = p.then(function () { return doc.getPage(n); }).then(function (pg) { return pg.getTextContent(); }).then(function (tc) {
+          saida.push(tc.items.map(function (it) { return it.str + (it.hasEOL ? '\n' : ' '); }).join(''));
+        });
+      })(i);
+    }
+    return p.then(function () { return saida; });
+  }
   function textosDoPdf(bytes) {
-    return window.pdfjsLib.getDocument({ data: new Uint8Array(bytes) }).promise.then(function (doc) {
-      var saida = [], p = Promise.resolve();
-      for (var i = 1; i <= doc.numPages; i++) {
-        (function (n) {
-          p = p.then(function () { return doc.getPage(n); }).then(function (pg) { return pg.getTextContent(); }).then(function (tc) {
-            saida.push(tc.items.map(function (it) { return it.str; }).join(' '));
-          });
-        })(i);
-      }
-      return p.then(function () { return saida; });
+    return window.pdfjsLib.getDocument({ data: new Uint8Array(bytes) }).promise.then(textosDoDoc);
+  }
+
+  // ---------- leitura de contas: PDF com texto, PDF escaneado ou foto
+  function lerBarras(canvas) {
+    var Z = window.ZXing, dicas = new Map();
+    dicas.set(Z.DecodeHintType.POSSIBLE_FORMATS, [Z.BarcodeFormat.ITF]);
+    dicas.set(Z.DecodeHintType.TRY_HARDER, true);
+    dicas.set(Z.DecodeHintType.ALLOWED_LENGTHS, Int32Array.from([44]));
+    var leitor = new Z.MultiFormatReader();
+    leitor.setHints(dicas);
+    try {
+      var bmp = new Z.BinaryBitmap(new Z.HybridBinarizer(new Z.HTMLCanvasElementLuminanceSource(canvas)));
+      return leitor.decode(bmp).getText();
+    } catch (e) { return null; }
+  }
+  function tela(fonte, largura, girar) {
+    var w = fonte.naturalWidth || fonte.width, h = fonte.naturalHeight || fonte.height;
+    var k = Math.min(1, largura / Math.max(w, h));
+    var cv = document.createElement('canvas'), ctx;
+    cv.width = Math.round((girar ? h : w) * k); cv.height = Math.round((girar ? w : h) * k);
+    ctx = cv.getContext('2d');
+    ctx.fillStyle = '#FFFFFF'; ctx.fillRect(0, 0, cv.width, cv.height);
+    if (girar) { ctx.translate(cv.width, 0); ctx.rotate(Math.PI / 2); }
+    ctx.drawImage(fonte, 0, 0, w * k, h * k);
+    return cv;
+  }
+  // Tenta achar o código de barras do boleto na imagem: tamanho normal, girada e menor.
+  function barrasDaImagem(fonte) {
+    var tentativas = [[2000, false], [2000, true], [1200, false], [1200, true], [3000, false]];
+    for (var i = 0; i < tentativas.length; i++) {
+      var bc = lerBarras(tela(fonte, tentativas[i][0], tentativas[i][1]));
+      if (bc) { var r = VS.boleto.deBarras(bc, S.db.hoje); if (r) return r; }
+    }
+    return null;
+  }
+  function imagemDe(blob) {
+    return new Promise(function (res, rej) {
+      var url = URL.createObjectURL(blob), img = new Image();
+      img.onload = function () { res(img); setTimeout(function () { URL.revokeObjectURL(url); }, 1000); };
+      img.onerror = function () { URL.revokeObjectURL(url); rej(new Error('imagem')); };
+      img.src = url;
     });
   }
-  // Lê o texto do PDF de uma conta e procura a linha do boleto (valor e vencimento).
-  VS.lerBoletoPdf = function (blob) {
-    return VS.carregar('pdfjs').then(function () { return lerBytes(blob); }).then(textosDoPdf).then(function (textos) {
-      return VS.boleto.ler(textos.join('\n'), S.db.hoje);
+  function paginaComoImagem(doc, n) {
+    return doc.getPage(n).then(function (pg) {
+      var base = pg.getViewport({ scale: 1 }), vp = pg.getViewport({ scale: 2200 / Math.max(base.width, base.height) });
+      var cv = document.createElement('canvas');
+      cv.width = Math.round(vp.width); cv.height = Math.round(vp.height);
+      var ctx = cv.getContext('2d'); ctx.fillStyle = '#FFFFFF'; ctx.fillRect(0, 0, cv.width, cv.height);
+      return pg.render({ canvasContext: ctx, viewport: vp }).promise.then(function () { return cv; });
     });
+  }
+  function juntar(r, b) {
+    if (!b) return r;
+    r.linha = r.linha || b.linha;
+    if (!r.descricao) r.descricao = VS.boleto.rotulo(r.linha);
+    if (!r.valor && b.valor) r.valor = b.valor;
+    if (!r.vencimento && b.vencimento) r.vencimento = b.vencimento;
+    r.porImagem = true;
+    return r;
+  }
+  // Lê um PDF ou uma foto de conta e devolve o que achar: descricao, valor, vencimento, linha, pix.
+  VS.lerArquivoConta = function (arq) {
+    var blob = arq.blob || arq, nome = arq.name || arq.nome || '', tipo = blob.type || arq.tipo || '';
+    var ehPdf = tipo === 'application/pdf' || /\.pdf$/i.test(nome);
+    if (ehPdf) {
+      var doc;
+      return VS.carregar('pdfjs').then(function () { return lerBytes(blob); }).then(function (bytes) {
+        return window.pdfjsLib.getDocument({ data: bytes }).promise;
+      }).then(function (d) { doc = d; return textosDoDoc(d); }).then(function (textos) {
+        var r = VS.boleto.lerTexto(textos.join('\n'), S.db.hoje);
+        if (r.linha || r.pix) return r;
+        // PDF escaneado ou sem a linha em texto: procura o código de barras nas páginas
+        return VS.carregar('zxing').then(function () {
+          var p = Promise.resolve(null);
+          for (var n = 1; n <= Math.min(doc.numPages, 3); n++) {
+            (function (pagina) {
+              p = p.then(function (achou) { return achou || paginaComoImagem(doc, pagina).then(barrasDaImagem); });
+            })(n);
+          }
+          return p.then(function (b) { return juntar(r, b); });
+        });
+      });
+    }
+    if (/^image\//.test(tipo) || /\.(jpe?g|png|webp)$/i.test(nome)) {
+      return VS.carregar('zxing').then(function () { return imagemDe(blob); }).then(function (img) {
+        return juntar({}, barrasDaImagem(img));
+      });
+    }
+    return Promise.resolve({});
   };
   function separarPdf(bytes, mes) {
     return VS.carregar('pdfjs').then(function () { return VS.carregar('pdflib'); }).then(function () { return textosDoPdf(bytes); }).then(function (textos) {

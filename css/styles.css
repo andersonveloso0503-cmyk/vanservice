@@ -288,3 +288,10 @@ a { color: var(--accent-text); }
 .com-codigo { border: 1.5px solid var(--line); border-radius: var(--r-ctl); padding: 0 14px; }
 .com-codigo summary { min-height: 44px; display: flex; align-items: center; font-size: 14px; font-weight: 700; color: var(--accent-text); cursor: pointer; }
 .com-codigo[open] { padding-bottom: 14px; }
+
+/* ---------- conta pronta para pagar */
+.lido { display: flex; flex-direction: column; gap: 4px; padding: 12px 14px; border-radius: var(--r-ctl); background: var(--ok-soft); color: var(--ink); }
+.lido-ok { display: flex; align-items: center; gap: 6px; color: var(--ok-text); font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+.lido-rot { font-size: 12px; font-weight: 700; color: var(--ink-2); }
+.lido-cod, .codigo-barras { font-size: 13px; font-weight: 600; overflow-wrap: anywhere; user-select: all; }
+.chip-pagar { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-text); }
