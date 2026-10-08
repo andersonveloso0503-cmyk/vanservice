@@ -100,8 +100,15 @@
     var creditado = vt && vt.status === 'creditado';
     var h = '<div class="resumo"><strong>' + e(f.nome) + '</strong><span class="sub num">CPF ' + U.cpfFmt(f.cpf) + '</span><span class="est est-' + a.cls + '">' + a.txt + '</span></div>';
 
+    // O administrador escolhe o perfil logo no topo da ficha.
+    if (u.papel === 'admin' && f.id !== u.id) {
+      h += '<section class="bloco"><h3>Perfil de acesso</h3><label class="campo" for="func-papel"><span class="so-leitor">Perfil de acesso</span><select id="func-papel" data-change="func-papel" data-id="' + f.id + '">';
+      ['funcionario', 'rh', 'financeiro', 'admin'].forEach(function (p) { h += '<option value="' + p + '"' + (f.papel === p ? ' selected' : '') + '>' + U.PAPEIS[p] + '</option>'; });
+      h += '</select></label><p class="sub">Salva na hora. ' + (f.papel === 'funcionario' ? 'Escolha ' + U.PAPEIS.rh + ' para dar acesso às telas do RH / Fiscal.' : 'Para voltar a ser só funcionário, escolha Funcionário.') + '</p></section>';
+    }
+
     if (!U.ativo(f) && f.papel === 'funcionario') {
-      h += '<section class="bloco"><h3>Primeiro acesso</h3><p class="nota">' + e(U.primeiroNome(f.nome)) + ' ainda não criou a senha. Basta abrir o app, tocar em "Primeiro acesso" e digitar o CPF e o nome.</p></section>';
+      h += '<section class="bloco"><h3>Primeiro acesso</h3><p class="nota">' + e(U.primeiroNome(f.nome)) + ' ainda não criou a senha. Basta abrir o app, tocar em "Criar minha senha" e digitar o CPF e o nome.</p></section>';
     } else if (f.codigo) {
       h += '<section class="bloco"><h3>Código de primeiro acesso</h3><div class="codigo"><span class="num" id="func-codigo">' + e(U.codigoFmt(f.codigo)) + '</span>' +
         '<button type="button" class="btn btn-borda btn-p" data-act="copiar" data-texto="' + e(U.codigoFmt(f.codigo)) + '">' + U.ic('copiar', 18) + '<span>Copiar</span></button></div>' +
@@ -133,9 +140,7 @@
     }
 
     if (u.papel === 'admin' && f.id !== u.id) {
-      h += '<section class="bloco"><h3>Perfil de acesso</h3><label class="campo" for="func-papel"><span class="so-leitor">Perfil de acesso</span><select id="func-papel" data-change="func-papel" data-id="' + f.id + '">';
-      ['funcionario', 'rh', 'financeiro', 'admin'].forEach(function (p) { h += '<option value="' + p + '"' + (f.papel === p ? ' selected' : '') + '>' + U.PAPEIS[p] + '</option>'; });
-      h += '</select></label><button type="button" class="btn ' + (f.bloqueado ? 'btn-borda' : 'btn-perigo-borda') + '" data-act="func-bloquear" data-id="' + f.id + '" data-bloq="' + (f.bloqueado ? '0' : '1') + '">' + (f.bloqueado ? 'Liberar acesso' : 'Bloquear acesso') + '</button></section>';
+      h += '<section class="bloco"><h3>Acesso ao app</h3><button type="button" class="btn ' + (f.bloqueado ? 'btn-borda' : 'btn-perigo-borda') + '" data-act="func-bloquear" data-id="' + f.id + '" data-bloq="' + (f.bloqueado ? '0' : '1') + '">' + (f.bloqueado ? 'Liberar acesso' : 'Bloquear acesso') + '</button></section>';
     }
     return { titulo: 'Funcionário', html: h };
   };

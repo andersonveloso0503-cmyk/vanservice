@@ -27,7 +27,7 @@
     if (S.demo) {
       h += '<div class="demo-caixa"><h2>Demonstração</h2><p>Entre sem senha para ver o app como cada perfil.</p><div class="demo-botoes">' +
         '<button type="button" class="btn btn-borda" data-act="demo-entrar" data-papel="admin">Administrador</button>' +
-        '<button type="button" class="btn btn-borda" data-act="demo-entrar" data-papel="rh">RH</button>' +
+        '<button type="button" class="btn btn-borda" data-act="demo-entrar" data-papel="rh">RH / Fiscal</button>' +
         '<button type="button" class="btn btn-borda" data-act="demo-entrar" data-papel="financeiro">Financeiro</button>' +
         '<button type="button" class="btn btn-borda" data-act="demo-entrar" data-papel="funcionario">Funcionário</button>' +
         '</div></div>';
@@ -61,7 +61,7 @@
       '<form data-form="primeiro" class="form" novalidate>' +
       '<label class="campo" for="pa-cpf">CPF<input id="pa-cpf" name="cpf" type="text" inputmode="numeric" placeholder="000.000.000-00" data-mask="cpf"></label>' +
       '<label class="campo" for="pa-nome">Nome e sobrenome<input id="pa-nome" name="nome" type="text" autocomplete="name" placeholder="Ex.: Maria Souza"></label>' +
-      '<details class="com-codigo"' + abrirCodigo + '><summary>Sou do RH, do financeiro ou recebi um código</summary>' +
+      '<details class="com-codigo"' + abrirCodigo + '><summary>Sou do RH / Fiscal, do financeiro ou recebi um código</summary>' +
       '<label class="campo" for="pa-codigo">Código de acesso<input id="pa-codigo" name="codigo" type="text" autocapitalize="characters" autocomplete="off" placeholder="XXXXX-XXXXX"></label></details>' +
       '<label class="campo" for="pa-senha">Nova senha<input id="pa-senha" name="senha" type="password" autocomplete="new-password" placeholder="Pelo menos 8 caracteres"></label>' +
       '<label class="campo" for="pa-senha2">Repita a senha<input id="pa-senha2" name="senha2" type="password" autocomplete="new-password"></label>' +

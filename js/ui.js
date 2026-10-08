@@ -42,7 +42,7 @@
   U.ativo = function (f) { return f.ativo !== undefined ? !!f.ativo : !!f.senha; };
   U.codigoFmt = function (c) { c = String(c || ''); return c.length === 10 ? c.slice(0, 5) + '-' + c.slice(5) : c; };
   U.contratoDe = function (id) { var k = S.porId(S.db.contratos, id); return k ? k.nome : 'Sem contrato'; };
-  U.PAPEIS = { admin: 'Administrador', rh: 'RH', financeiro: 'Financeiro', funcionario: 'Funcionário' };
+  U.PAPEIS = { admin: 'Administrador', rh: 'RH / Fiscal', financeiro: 'Financeiro', funcionario: 'Funcionário' };
 
   U.statusConta = function (c) {
     var hoje = S.db.hoje;
@@ -229,7 +229,7 @@
   VS.sheets.perfis = function () {
     var h = '<p class="nota">Cada perfil vê telas diferentes. Escolha um para testar.</p><div class="pilha">';
     [['admin', 'Administrador', 'Vê tudo: contas, equipe, orçamentos e contratos'],
-     ['rh', 'RH', 'Lança contas, cuida da equipe e dos pedidos'],
+     ['rh', 'RH / Fiscal', 'Lança contas, cuida da equipe e dos pedidos'],
      ['financeiro', 'Financeiro', 'Recebe as contas e marca como pagas'],
      ['funcionario', 'Funcionário', 'Contracheques, vale-transporte e férias']].forEach(function (p) {
       h += '<button type="button" class="linha-nav" data-act="demo-entrar" data-papel="' + p[0] + '"><span class="linha-2"><strong>' + p[1] + '</strong><small>' + p[2] + '</small></span>' + U.ic('seta', 18) + '</button>';
