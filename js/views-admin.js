@@ -103,3 +103,39 @@
   };
   VS.acts.sair = function () { S.sair().then(function () { VS.go('login'); }); };
 })();
+
+/* Recado para o RH / Fiscal: ao abrir o app, lembra onde fica o passo a passo. */
+(function () {
+  'use strict';
+  var VS = window.VS, S = VS.store, U = VS.u;
+  var CHAVE = 'vs-recado-rh-desligado';
+  var mostrado = false;
+  function desligado() { try { return window.localStorage.getItem(CHAVE) === '1'; } catch (e) { return false; } }
+
+  VS.sheets.recadoRh = function () {
+    return {
+      titulo: 'Recado',
+      html: '<div class="recado"><span class="bloco-ic">' + U.ic('balao') + '</span>' +
+        '<p><strong>Qualquer dúvida sobre o aplicativo, toque em Perfil.</strong> Lá está todo o passo a passo, com imagens: contas, pagamentos a funcionários, vale-transporte e contracheques.</p></div>' +
+        '<button type="button" class="btn btn-cheio" data-act="recado-perfil">Ir para o Perfil</button>' +
+        '<button type="button" class="btn btn-borda" data-act="fechar">Entendi</button>' +
+        '<label class="marcar" for="recado-nao"><input id="recado-nao" type="checkbox" data-change="recado-nao"><span>Não mostrar de novo</span></label>'
+    };
+  };
+  VS.acts['recado-perfil'] = function () { VS.state.sheet = null; VS.go('perfil'); };
+  VS.changes['recado-nao'] = function (el) {
+    try { if (el.checked) window.localStorage.setItem(CHAVE, '1'); else window.localStorage.removeItem(CHAVE); } catch (e) { /* sem armazenamento */ }
+  };
+
+  // Mostra uma vez cada vez que o RH abre o app ou entra.
+  var renderOriginal = VS.render;
+  VS.render = function () {
+    var u = S.me();
+    if (!u) mostrado = false;
+    else if (!mostrado && u.papel === 'rh' && !S.demo && !VS.state.sheet) {
+      mostrado = true;
+      if (!desligado()) { VS.state.sheet = { tipo: 'recadoRh' }; }
+    }
+    return renderOriginal.apply(this, arguments);
+  };
+})();

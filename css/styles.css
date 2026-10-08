@@ -333,3 +333,6 @@ a.link { display: inline-flex; align-items: center; }
 .convite-txt { flex: 1; min-width: 180px; display: flex; flex-direction: column; gap: 2px; }
 .convite-txt strong { font-weight: 800; }
 .convite-botoes { display: flex; align-items: center; gap: 6px; }
+.recado { display: flex; gap: 14px; align-items: flex-start; }
+.recado .bloco-ic { background: var(--accent-soft); color: var(--accent-text); }
+.recado p { font-size: 15px; line-height: 1.5; }
